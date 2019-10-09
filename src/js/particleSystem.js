@@ -4,6 +4,11 @@
 /* Get or create the application global variable */
 var App = App || {};
 
+
+var clock = new THREE.Clock();
+var keyboard = new KeyboardState();
+var plane;
+
 const ParticleSystem = function() {
 
     // setup the pointer to the scope 'this' variable
@@ -102,12 +107,14 @@ const ParticleSystem = function() {
 
         var planeGeometry = new THREE.PlaneGeometry( 2 * radius , 1.25 * height);
         var planeMaterial = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
-        var plane = new THREE.Mesh( planeGeometry, planeMaterial );
+        plane = new THREE.Mesh( planeGeometry, planeMaterial );
         plane.geometry.translate(0, (bounds.maxY - bounds.minY)/2, 0);      
         
         sceneObject.add(plane);
+        //animate();
 
-       
+        //for plane moving        
+        Planeanimate();
         
         
     };
@@ -172,3 +179,24 @@ const ParticleSystem = function() {
     return self.public;
 
 };
+
+function Planeanimate(){
+    requestAnimationFrame(Planeanimate);
+    //self.render();
+    updatePlane();
+}
+
+function updatePlane(){
+    keyboard.update();
+    var moveDistance = clock.getDelta();
+    //console.log(moveDistance);
+
+    if(keyboard.pressed("A")){
+        plane.translateZ(-moveDistance);
+    }
+    if(keyboard.pressed("D")){
+        plane.translateZ(moveDistance);
+
+    }
+}
+
