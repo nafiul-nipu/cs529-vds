@@ -10,7 +10,7 @@ const ParticleSystem = function() {
     const self = this;
 
     // data container
-    const data = [];
+    self.data = [];
 
     // scene graph group for the particle system
     const sceneObject = new THREE.Group();
@@ -41,6 +41,74 @@ const ParticleSystem = function() {
 
         // use self.data to create the particle system
         // draw your particle system here!
+        //creating particle geometry
+        var particleGeometry = new THREE.Geometry();
+        //console.log(self.data.length);
+
+        //creating particle material which is PointsMaterial
+        //two arg - color, size of the particle
+        var particleMaterial = new THREE.PointsMaterial({
+            color: 'rgb(25s, 255, 255)', 
+            size: 1,
+            side: THREE.DoubleSide,
+            sizeAttenuation: false,
+            vertexColors: THREE.VertexColors,
+        });        
+
+        self.data.forEach(p => {
+            const vector = new THREE.Vector3(p.X, p.Y, p.Z);
+            particleGeometry.vertices.push(vector);
+            if(p.concentration == 0)
+            {
+                particleGeometry.colors.push(new THREE.Color(0xffffd4));
+            }
+            else if(p.concentration > 0 && p.concentration <= 2)
+            {
+                particleGeometry.colors.push(new THREE.Color(0xfee391));
+            }
+            else if(p.concentration > 2 && p.concentration <= 5)
+            {
+                particleGeometry.colors.push(new THREE.Color(0xfec44f));
+            }
+            else if(p.concentration > 5 && p.concentration <= 10)
+            {
+                particleGeometry.colors.push(new THREE.Color(0xfe9929));
+            }
+            else if(p.concentration > 10 && p.concentration <= 20)
+            {
+                particleGeometry.colors.push(new THREE.Color(0xec7014));
+            }
+            else if(p.concentration > 20 && p.concentration <= 100)
+            {
+                particleGeometry.colors.push(new THREE.Color(0xcc4c02));
+            }
+            else{
+                particleGeometry.colors.push(new THREE.Color(0x8c2d04));
+            }
+        });
+        
+        //create the particle system
+        var particleSystem = new THREE.Points(
+            particleGeometry,
+            particleMaterial
+        )
+
+        sceneObject.add(particleSystem);
+
+
+        // get the radius and height based on the data bounds
+        const radius = (bounds.maxX - bounds.minX)/2.0 + 1;
+        const height = (bounds.maxY - bounds.minY) + 1;
+
+        var planeGeometry = new THREE.PlaneGeometry( 2 * radius , 1.25 * height);
+        var planeMaterial = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+        var plane = new THREE.Mesh( planeGeometry, planeMaterial );
+        plane.geometry.translate(0, (bounds.maxY - bounds.minY)/2, 0);      
+        
+        sceneObject.add(plane);
+
+       
+        
         
     };
 
@@ -63,24 +131,24 @@ const ParticleSystem = function() {
                 bounds.maxZ = Math.max(bounds.maxY || -Infinity, d.Points2);
 
                 // add the element to the data collection
-                data.push({
+                self.data.push({
                     // concentration density
                     concentration: Number(d.concentration),
                     // Position
                     X: Number(d.Points0),
-                    Y: Number(d.Points1),
-                    Z: Number(d.Points2),
+                    Y: Number(d.Points2),
+                    Z: Number(d.Points1),
                     // Velocity
                     U: Number(d.velocity0),
-                    V: Number(d.velocity1),
-                    W: Number(d.velocity2)
+                    V: Number(d.velocity2),
+                    W: Number(d.velocity1)
                 });
             })
             // when done loading
             .get(function() {
                 // draw the containment cylinder
                 // TODO: Remove after the data has been rendered
-                self.drawContainment();
+               // self.drawContainment();
 
                 // create the particle system
                 self.createParticleSystem();

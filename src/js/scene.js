@@ -36,6 +36,9 @@ const Scene = function(options) {
     // create the renderer
     self.renderer = new THREE.WebGLRenderer();
 
+    var controls = new THREE.OrbitControls( self.camera, self.renderer.domElement );
+    controls.update();
+
     // set the size and append it to the document
     self.renderer.setSize( width, height );
     document.getElementById(options.container).appendChild( self.renderer.domElement );
@@ -58,6 +61,7 @@ const Scene = function(options) {
 
         render: function() {
             requestAnimationFrame( self.public.render );
+            controls.update();
             self.renderer.render( self.scene, self.camera );
         }
 
