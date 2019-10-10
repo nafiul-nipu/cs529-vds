@@ -5,10 +5,10 @@
 var App = App || {};
 
 const ParticleSystem = function() {
-
-    var clock = new THREE.Clock();
-    var keyboard = new KeyboardState();
-    var plane;
+    //making public to call from anywhere
+    var plane, particleSystem, velocitySystem;
+    //using this for not calling plane when showing velocity
+    var velocityTest = false;
 
     // setup the pointer to the scope 'this' variable
     const self = this;
@@ -18,6 +18,12 @@ const ParticleSystem = function() {
 
     // scene graph group for the particle system
     const sceneObject = new THREE.Group();
+
+    //gui control
+    const gui = new dat.GUI();
+    gui.add(sceneObject.position, 'x', -10, 10);
+    gui.add(sceneObject.position, 'y', -10, 10);
+    gui.add(sceneObject.position, 'z', -5, 20);
 
     // bounds of the data
     const bounds = {};
@@ -42,6 +48,10 @@ const ParticleSystem = function() {
 
     // creates the particle system
     self.createParticleSystem = function() {
+
+        sceneObject.position.x = 0;
+        sceneObject.position.y = -2;
+        sceneObject.position.z = 0;
 
         // use self.data to create the particle system
         // draw your particle system here!
@@ -92,10 +102,18 @@ const ParticleSystem = function() {
         });
         
         //create the particle system
-        var particleSystem = new THREE.Points(
+        particleSystem = new THREE.Points(
             particleGeometry,
             particleMaterial
         )
+
+        // const gui = new dat.GUI();
+        // gui.add(sceneObject.position, 'x', 0, 10);
+        // gui.add(sceneObject.position, 'y', 0, 10);
+        // gui.add(sceneObject.position, 'z', 15, 30);
+
+        //naming the object to call from any where
+        particleSystem.name = 'particleSystem'
 
         sceneObject.add(particleSystem);
         
@@ -132,59 +150,130 @@ const ParticleSystem = function() {
             }
             
     }   
+    plane.name = 'plane'
         
         sceneObject.add(plane);
  }
  self.scatterPlot = function(zAxis){
-    d3.select('#rowSVG').select('svg').remove();
-    //zAxis = zAxis.toFixed(6);
-    console.log(zAxis);
-    console.log(self.data.length);
-    var filteredData = self.data.filter(p => {
-    return p.Z >= (zAxis - 0.0025) && p.Z <= (zAxis + 0.0025);  
-    });
-    console.log(filteredData);
-    var margin = {top: 10, right: 30, bottom: 30, left: 60},
-    width = 460 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+     if(velocityTest == false){
+        d3.select('#rowSVG').select('svg').remove();
+        //zAxis = zAxis.toFixed(6);
+        console.log(zAxis);
+        console.log(self.data.length);
+        var filteredData = self.data.filter(p => {
+        return p.Z >= (zAxis - 0.0025) && p.Z <= (zAxis + 0.0025);  
+        });
+        console.log(filteredData);
+        var margin = {top: 10, right: 30, bottom: 30, left: 60},
+        width = 460 - margin.left - margin.right,
+        height = 400 - margin.top - margin.bottom;
+    
+        // append the svg object to the body of the page
+        var svg = d3.select("#rowSVG")
+            .append("svg")
+                .attr("width", width + margin.left + margin.right)
+                .attr("height", height + margin.top + margin.bottom)
+                //.style("background-color", 'white')
+            .append("g")
+                .attr("transform",
+                    "translate(" + margin.left + "," + margin.top + ")");
+    
+        // Add X axis
+        var xScale = d3.scaleLinear()
+             .domain(d3.extent(filteredData.map(p => p.X)))
+                  .range([ 0, width ]);
+        svg.append("g")
+           .attr("transform", "translate(0," + height + ")")
+           .call(d3.axisBottom(xScale));
+    
+        // Add Y axis
+        var yScale = d3.scaleLinear()
+             .domain(d3.extent(filteredData.map(p => p.Y)))
+             .range([ height, 0]);
+        svg.append("g")
+           .call(d3.axisLeft(yScale));
+    
+        // Add dots
+        svg.append('g')
+            .selectAll("dot")
+            .data(filteredData)
+            .enter()
+            .append("circle")
+            .attr("cx", function (d) { return xScale(d.X); } )
+            .attr("cy", function (d) { return yScale(d.Y); } )
+            .attr("r", 2);
+     }
 
-    // append the svg object to the body of the page
-    var svg = d3.select("#rowSVG")
-    .append("svg")
-        .attr("width", width + margin.left + margin.right)
-        .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-        .attr("transform",
-            "translate(" + margin.left + "," + margin.top + ")");
-
-    // Add X axis
-    var xScale = d3.scaleLinear()
-         .domain(d3.extent(filteredData.map(p => p.X)))
-              .range([ 0, width ]);
-    svg.append("g")
-       .attr("transform", "translate(0," + height + ")")
-       .call(d3.axisBottom(xScale));
-
-    // Add Y axis
-    var yScale = d3.scaleLinear()
-         .domain(d3.extent(filteredData.map(p => p.Y)))
-         .range([ height, 0]);
-    svg.append("g")
-       .call(d3.axisLeft(yScale));
-
-    // Add dots
-    svg.append('g')
-        .selectAll("dot")
-        .data(filteredData)
-        .enter()
-        .append("circle")
-        .attr("cx", function (d) { return xScale(d.X); } )
-        .attr("cy", function (d) { return yScale(d.Y); } )
-        .attr("r", 2);
  }
 
+//velocity function
+ self.createVelocity = function() {
 
+    sceneObject.position.x = 0;
+    sceneObject.position.y = 2;
+    sceneObject.position.z = 5;
 
+    // use self.data to create the particle system
+    // draw your particle system here!
+    //creating particle geometry
+    var velocityGeometry = new THREE.Geometry();
+    //console.log(self.data.length);
+
+    //velocityGeometry.lookAt(-20,-20,-20);
+
+    //creating particle material which is PointsMaterial
+    //two arg - color, size of the particle
+    var velocityMaterial = new THREE.PointsMaterial({
+        color: 'rgb(255, 255, 255)', 
+        size: 1,
+        side: THREE.DoubleSide,
+        sizeAttenuation: false,
+        vertexColors: THREE.VertexColors,
+    });        
+
+    self.data.forEach(p => {
+        const vector = new THREE.Vector3(p.U, p.V, p.W);
+        velocityGeometry.vertices.push(vector);
+        if(p.concentration == 0)
+        {
+            velocityGeometry.colors.push(new THREE.Color(0xffffd4));
+        }
+        else if(p.concentration > 0 && p.concentration <= 2)
+        {
+            velocityGeometry.colors.push(new THREE.Color(0xfee391));
+        }
+        else if(p.concentration > 2 && p.concentration <= 5)
+        {
+            velocityGeometry.colors.push(new THREE.Color(0xfec44f));
+        }
+        else if(p.concentration > 5 && p.concentration <= 10)
+        {
+            velocityGeometry.colors.push(new THREE.Color(0xfe9929));
+        }
+        else if(p.concentration > 10 && p.concentration <= 20)
+        {
+            velocityGeometry.colors.push(new THREE.Color(0xec7014));
+        }
+        else if(p.concentration > 20 && p.concentration <= 100)
+        {
+            velocityGeometry.colors.push(new THREE.Color(0xcc4c02));
+        }
+        else{
+            velocityGeometry.colors.push(new THREE.Color(0x8c2d04));
+        }
+    });
+    
+    //create the particle system
+    velocitySystem = new THREE.Points(
+        velocityGeometry,
+        velocityMaterial
+    )
+    //velocitySystem.name = 'velocitySystem'
+    velocitySystem.name = 'velocitySystem'
+    sceneObject.add(velocitySystem);
+    
+    
+};
     // data loading function
     self.loadData = function(file){
 
@@ -222,10 +311,29 @@ const ParticleSystem = function() {
                 // draw the containment cylinder
                 // TODO: Remove after the data has been rendered
                // self.drawContainment();
-
                 // create the particle system
                 self.createParticleSystem();
                 self.createPlane();
+                d3.select('#scatter').on('click', function(){
+                    //d3.select('#scene').select('canvas').remove();
+                    //console.log(sceneObject.getObjectByName('particleSystem'));
+                    d3.select('#rowSVG').select('svg').remove();
+                    velocityTest = true;
+                    var particleName = sceneObject.getObjectByName('particleSystem');
+                    sceneObject.remove(particleName);
+                    var planeName = sceneObject.getObjectByName('plane');
+                    sceneObject.remove(planeName);
+                    self.createVelocity();
+                    //self.drawContainment();
+                    //self.createPlane();
+                });
+                d3.select('#reset').on('click', function(){
+                    velocityTest = false;
+                    var velocityName = sceneObject.getObjectByName('velocitySystem');
+                    sceneObject.remove(velocityName);
+                    self.createParticleSystem();
+                    self.createPlane();
+                });
             });
     };
 

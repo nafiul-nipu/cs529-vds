@@ -10,3 +10,7 @@ svg {
 path, line {
     stroke: #777;
 }
+#button{
+    margin-top: 20px;
+    text-align: center;
+  }
