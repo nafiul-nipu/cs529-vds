@@ -4,12 +4,11 @@
 /* Get or create the application global variable */
 var App = App || {};
 
-
-var clock = new THREE.Clock();
-var keyboard = new KeyboardState();
-var plane;
-
 const ParticleSystem = function() {
+
+    var clock = new THREE.Clock();
+    var keyboard = new KeyboardState();
+    var plane;
 
     // setup the pointer to the scope 'this' variable
     const self = this;
@@ -53,7 +52,7 @@ const ParticleSystem = function() {
         //creating particle material which is PointsMaterial
         //two arg - color, size of the particle
         var particleMaterial = new THREE.PointsMaterial({
-            color: 'rgb(25s, 255, 255)', 
+            color: 'rgb(255, 255, 255)', 
             size: 1,
             side: THREE.DoubleSide,
             sizeAttenuation: false,
@@ -99,8 +98,12 @@ const ParticleSystem = function() {
         )
 
         sceneObject.add(particleSystem);
+        
+        
+    };
 
-
+    self.createPlane = function() {
+        
         // get the radius and height based on the data bounds
         const radius = (bounds.maxX - bounds.minX)/2.0 + 1;
         const height = (bounds.maxY - bounds.minY) + 1;
@@ -108,16 +111,79 @@ const ParticleSystem = function() {
         var planeGeometry = new THREE.PlaneGeometry( 2 * radius , 1.25 * height);
         var planeMaterial = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
         plane = new THREE.Mesh( planeGeometry, planeMaterial );
-        plane.geometry.translate(0, (bounds.maxY - bounds.minY)/2, 0);      
+        plane.geometry.translate(0, (bounds.maxY - bounds.minY)/2, 0);   
+        
+        //keyboard work
+       var value = 0.025;
+       document.addEventListener("keydown", onDocumentKeyDown, false);
+       function onDocumentKeyDown(event) {            
+            var keyCode = event.which;
+            if (keyCode == 65) {
+                console.log(plane.position.z);
+                plane.translateZ(-value);
+                //var zAxis = plane.position.z;
+                self.scatterPlot(plane.position.z);
+            }
+            else if (keyCode == 68)
+            {
+                console.log(plane.position.z);
+                plane.translateZ(value);
+                self.scatterPlot(plane.position.z);
+            }
+            
+    }   
         
         sceneObject.add(plane);
-        //animate();
+ }
+ self.scatterPlot = function(zAxis){
+    d3.select('#rowSVG').select('svg').remove();
+    //zAxis = zAxis.toFixed(6);
+    console.log(zAxis);
+    console.log(self.data.length);
+    var filteredData = self.data.filter(p => {
+    return p.Z >= (zAxis - 0.0025) && p.Z <= (zAxis + 0.0025);  
+    });
+    console.log(filteredData);
+    var margin = {top: 10, right: 30, bottom: 30, left: 60},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
 
-        //for plane moving        
-        Planeanimate();
-        
-        
-    };
+    // append the svg object to the body of the page
+    var svg = d3.select("#rowSVG")
+    .append("svg")
+        .attr("width", width + margin.left + margin.right)
+        .attr("height", height + margin.top + margin.bottom)
+    .append("g")
+        .attr("transform",
+            "translate(" + margin.left + "," + margin.top + ")");
+
+    // Add X axis
+    var xScale = d3.scaleLinear()
+         .domain(d3.extent(filteredData.map(p => p.X)))
+              .range([ 0, width ]);
+    svg.append("g")
+       .attr("transform", "translate(0," + height + ")")
+       .call(d3.axisBottom(xScale));
+
+    // Add Y axis
+    var yScale = d3.scaleLinear()
+         .domain(d3.extent(filteredData.map(p => p.Y)))
+         .range([ height, 0]);
+    svg.append("g")
+       .call(d3.axisLeft(yScale));
+
+    // Add dots
+    svg.append('g')
+        .selectAll("dot")
+        .data(filteredData)
+        .enter()
+        .append("circle")
+        .attr("cx", function (d) { return xScale(d.X); } )
+        .attr("cy", function (d) { return yScale(d.Y); } )
+        .attr("r", 2);
+ }
+
+
 
     // data loading function
     self.loadData = function(file){
@@ -159,6 +225,7 @@ const ParticleSystem = function() {
 
                 // create the particle system
                 self.createParticleSystem();
+                self.createPlane();
             });
     };
 
@@ -179,24 +246,4 @@ const ParticleSystem = function() {
     return self.public;
 
 };
-
-function Planeanimate(){
-    requestAnimationFrame(Planeanimate);
-    //self.render();
-    updatePlane();
-}
-
-function updatePlane(){
-    keyboard.update();
-    var moveDistance = clock.getDelta();
-    //console.log(moveDistance);
-
-    if(keyboard.pressed("A")){
-        plane.translateZ(-moveDistance);
-    }
-    if(keyboard.pressed("D")){
-        plane.translateZ(moveDistance);
-
-    }
-}
 
