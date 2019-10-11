@@ -17,6 +17,14 @@ const Scene = function(options) {
 
     // create the scene
     self.scene = new THREE.Scene();
+    //self.scene.fog = new THREE.Fog(color, near, far);
+    self.scene.background = new THREE.Color(0xA3A3A3);
+    //self.scene.fog = new THREE.FogExp2(0xA3A3A3, 0.2);
+    //gui control
+    // const gui = new dat.GUI();
+    // gui.add(self.scene.fog, 'near', 1, 2);
+    // gui.add(self.scene.fog, 'far', 1, 2);
+    //gui.add(self.scene.fog, 'z', -5, 20);
 
     // setup the camera
     self.camera = new THREE.PerspectiveCamera( 75, width / height, 0.1, 1000 );

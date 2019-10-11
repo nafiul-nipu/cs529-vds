@@ -19,11 +19,11 @@ const ParticleSystem = function() {
     // scene graph group for the particle system
     const sceneObject = new THREE.Group();
 
-    //gui control
-    const gui = new dat.GUI();
-    gui.add(sceneObject.position, 'x', -10, 10);
-    gui.add(sceneObject.position, 'y', -10, 10);
-    gui.add(sceneObject.position, 'z', -5, 20);
+    // //gui control
+    // const gui = new dat.GUI();
+    // gui.add(sceneObject.position, 'x', -10, 10);
+    // gui.add(sceneObject.position, 'y', -10, 10);
+    // gui.add(sceneObject.position, 'z', -5, 20);
 
     // bounds of the data
     const bounds = {};
@@ -67,40 +67,43 @@ const ParticleSystem = function() {
             side: THREE.DoubleSide,
             sizeAttenuation: false,
             vertexColors: THREE.VertexColors,
-        });        
+        });
+        //var c1 = 0; 
+        //var c2 = 0;
+        //var c3 = 0;
+       // var c4= 0;
+        //var c5 = 0;
 
         self.data.forEach(p => {
             const vector = new THREE.Vector3(p.X, p.Y, p.Z);
             particleGeometry.vertices.push(vector);
-            if(p.concentration == 0)
+            if(p.concentration >= 0 && p.concentration <=0.09)
             {
-                particleGeometry.colors.push(new THREE.Color(0xffffd4));
+                particleGeometry.colors.push(new THREE.Color(0xd7191c));
+                //c1++;
             }
-            else if(p.concentration > 0 && p.concentration <= 2)
+            else if(p.concentration >= 0.09 && p.concentration <= 0.5)
             {
-                particleGeometry.colors.push(new THREE.Color(0xfee391));
+                particleGeometry.colors.push(new THREE.Color(0x2c7bb6));
+                //c2++;
+                
             }
-            else if(p.concentration > 2 && p.concentration <= 5)
+            else if(p.concentration > 0.5 && p.concentration <= 20)
             {
-                particleGeometry.colors.push(new THREE.Color(0xfec44f));
+                particleGeometry.colors.push(new THREE.Color(0xffffbf));
+                //c3++;
             }
-            else if(p.concentration > 5 && p.concentration <= 10)
+            else if(p.concentration > 20 && p.concentration <= 40)
             {
-                particleGeometry.colors.push(new THREE.Color(0xfe9929));
-            }
-            else if(p.concentration > 10 && p.concentration <= 20)
-            {
-                particleGeometry.colors.push(new THREE.Color(0xec7014));
-            }
-            else if(p.concentration > 20 && p.concentration <= 100)
-            {
-                particleGeometry.colors.push(new THREE.Color(0xcc4c02));
+                particleGeometry.colors.push(new THREE.Color(0xabd9e9));
+                //c4++;
             }
             else{
-                particleGeometry.colors.push(new THREE.Color(0x8c2d04));
+                particleGeometry.colors.push(new THREE.Color(0xfdae61));
+                //c5++;
             }
         });
-        
+               
         //create the particle system
         particleSystem = new THREE.Points(
             particleGeometry,
@@ -127,7 +130,7 @@ const ParticleSystem = function() {
         const height = (bounds.maxY - bounds.minY) + 1;
 
         var planeGeometry = new THREE.PlaneGeometry( 2 * radius , 1.25 * height);
-        var planeMaterial = new THREE.MeshBasicMaterial( {color: 0xffff00, side: THREE.DoubleSide} );
+        var planeMaterial = new THREE.MeshBasicMaterial( {color: 0x018571, side: THREE.DoubleSide} );
         plane = new THREE.Mesh( planeGeometry, planeMaterial );
         plane.geometry.translate(0, (bounds.maxY - bounds.minY)/2, 0);   
         
@@ -141,6 +144,7 @@ const ParticleSystem = function() {
                 plane.translateZ(-value);
                 //var zAxis = plane.position.z;
                 self.scatterPlot(plane.position.z);
+                //sceneObject.add(scatterPlotObject);
             }
             else if (keyCode == 68)
             {
@@ -161,7 +165,7 @@ const ParticleSystem = function() {
         console.log(zAxis);
         console.log(self.data.length);
         var filteredData = self.data.filter(p => {
-        return p.Z >= (zAxis - 0.0025) && p.Z <= (zAxis + 0.0025);  
+            return p.Z >= (zAxis - 0.0005) && p.Z <= (zAxis + 0.0005);  
         });
         console.log(filteredData);
         var margin = {top: 10, right: 30, bottom: 30, left: 60},
@@ -194,24 +198,70 @@ const ParticleSystem = function() {
            .call(d3.axisLeft(yScale));
     
         // Add dots
-        svg.append('g')
-            .selectAll("dot")
+        var circles = svg.append('g')
+            .selectAll("dots")
             .data(filteredData)
             .enter()
             .append("circle")
             .attr("cx", function (d) { return xScale(d.X); } )
             .attr("cy", function (d) { return yScale(d.Y); } )
-            .attr("r", 2);
-     }
+            .attr("r", 5)
+            .attr("class", "non_brushed");
+
+        //brushing
+        function highlightBrush(){
+            if (d3.event.selection != null){
+                //revert back to initial color
+                circles.attr("class", "non_brushed");
+
+                var brush_coordinate = d3.brushSelection(this);
+                //color the dots
+                circles.filter(function(){
+                    var cx = d3.select(this).attr("cx");
+                    var cy = d3.select(this).attr("cy");
+
+                    return brushStart(brush_coordinate, cx, cy);
+
+                })
+                    .attr("class", "brushed");
+            }
+        }
+
+        var brush = d3.brush()
+                        //.extent([[0,0], [width, height]])
+                        .on("brush", highlightBrush)
+                        .on("end", greyScale)
+        svg.append("g")
+            .call(brush);
+
+        function brushStart(brush_coordinate, cx, cy){
+            var x0 = brush_coordinate[0][0];
+            var x1 = brush_coordinate[1][0];
+            var y0 = brush_coordinate[0][1];
+            var y1 = brush_coordinate[1][0];
+
+            console.log(x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1);
+
+            return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
+        }
+
+        function greyScale(){
+            
+            var d_brushed =  d3.selectAll(".brushed").data();
+            console.log(d_brushed);
+        }
+     
+     
+        }
 
  }
 
 //velocity function
  self.createVelocity = function() {
 
-    sceneObject.position.x = 0;
+    // sceneObject.position.x = 0;
     sceneObject.position.y = 2;
-    sceneObject.position.z = 5;
+    // sceneObject.position.z = 5;
 
     // use self.data to create the particle system
     // draw your particle system here!
@@ -234,32 +284,30 @@ const ParticleSystem = function() {
     self.data.forEach(p => {
         const vector = new THREE.Vector3(p.U, p.V, p.W);
         velocityGeometry.vertices.push(vector);
-        if(p.concentration == 0)
+        if(p.concentration >= 0 && p.concentration <=0.09)
         {
-            velocityGeometry.colors.push(new THREE.Color(0xffffd4));
+            velocityGeometry.colors.push(new THREE.Color(0xd7191c));
+            //c1++;
         }
-        else if(p.concentration > 0 && p.concentration <= 2)
+        else if(p.concentration >= 0.09 && p.concentration <= 0.5)
         {
-            velocityGeometry.colors.push(new THREE.Color(0xfee391));
+            velocityGeometry.colors.push(new THREE.Color(0x2c7bb6));
+            //c2++;
+            
         }
-        else if(p.concentration > 2 && p.concentration <= 5)
+        else if(p.concentration > 0.5 && p.concentration <= 20)
         {
-            velocityGeometry.colors.push(new THREE.Color(0xfec44f));
+            velocityGeometry.colors.push(new THREE.Color(0xffffbf));
+            //c3++;
         }
-        else if(p.concentration > 5 && p.concentration <= 10)
+        else if(p.concentration > 20 && p.concentration <= 40)
         {
-            velocityGeometry.colors.push(new THREE.Color(0xfe9929));
-        }
-        else if(p.concentration > 10 && p.concentration <= 20)
-        {
-            velocityGeometry.colors.push(new THREE.Color(0xec7014));
-        }
-        else if(p.concentration > 20 && p.concentration <= 100)
-        {
-            velocityGeometry.colors.push(new THREE.Color(0xcc4c02));
+            velocityGeometry.colors.push(new THREE.Color(0xabd9e9));
+            //c4++;
         }
         else{
-            velocityGeometry.colors.push(new THREE.Color(0x8c2d04));
+            velocityGeometry.colors.push(new THREE.Color(0xfdae61));
+            //c5++;
         }
     });
     
