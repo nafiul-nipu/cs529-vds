@@ -3,7 +3,7 @@
 <head>
     <meta charset=utf-8>
 
-    <title>Assignment 3 -- three.js Robot</title>
+    <title>Assignment 3 -- three.js</title>
 
     <!-- CSS Libraries -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" />
@@ -19,6 +19,10 @@
     <script src="lib/js/OrbitControls.js"></script>
     <script src="lib/js/KeyboardState.js"></script>
     <script src="lib/js/dat.gui.min.js"></script>
+    <script src="https://d3js.org/d3.v3.min.js"></script>
+    <script src="lib/js/d3.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3-legend/2.25.6/d3-legend.js"></script>
+    
 
     <!-- JS Source -->
     <script src="./src/js/scene.js"></script>
@@ -30,25 +34,70 @@
 <body onload="App.start();">
 
     <div class="manual">
-        <h1>Particle System</h1>
-        <p>Manual: <br> 
-            1. Press Up/Down/Left/Right Arrow for positioning the particles
-        </p>
+        <h1 style="text-align:center;">Particle System</h1>
+        
     </div>
 
-    <div class="container-fluid">
+    <div class="container-fluid" id="legend3">
+        <div id="legend2"></div>
         <div class="row" id="rowSVG">
             <div class="particleDiv col-md-6" id="remove">
                 <div id="scene"></div>
             </div>
         </div>
-        
-    </div>
+    
+     
+</div>
       
         <div id="button" class="w3-container">
                 <button class="w3-button w3-black w3-round-xlarge" id="scatter" type="button">Velocity</button>
                 <button class="w3-button w3-black w3-round-xlarge" id="reset" type="button">Default</button>
             </div>
 
+<div>
+  <p>Manual: <br> 
+    1. Press Up/Down/Left/Right Arrow for positioning the particles <br>
+    2. Use Mouse for rotation and mouse wheel for zoom in / out <br>
+    3. Press A and D to move the plane <br>
+    4. Press "velocity" to see the particle position after velocity. zoom in for closer look <br>
+    5. Press "Default" for resetting 
+</p>
+</div>
+
+<div>
+  <p>References: </p>
+  <ul>
+    <li><a href="http://colorbrewer2.org/#type=sequential&scheme=BuGn&n=3" target="_blank">Colorbrewer2</a></li>
+    <li><a href="https://d3js.org/" target="_blank">D3.js</a></li>
+    <li><a href="https://threejs.org/" target="_blank">Three.js</a></li>
+    <li><a href="https://d3-legend.susielu.com" target="_blank">D3 SVG Legend</a></li>
+    <li><a href="https://stackoverflow.com/" target="_blank">Stack Overflow</a></li>
+</ul>
+
+</div>
+
+<script>
+          
+var ordinal = d3.scaleOrdinal()
+  .domain(["<= 0.09", "<= 0.5", "<= 20", "<= 40", "> 40"])
+  .range([ "#D7191C", "#2C7BB6", "#FFFFBF", "#ABD9E9", "#FDAE61"]);
+
+var svg = d3.select("#legend2").append("svg")
+            .style("width", 200)
+            .style("height", 50);
+
+svg.append("g")
+  .attr("class", "legendOrdinal")
+  .attr("transform", "translate(20,20)");
+
+var legendOrdinal = d3.legendColor()
+  .shape("path", d3.symbol().type(d3.symbolSquare).size(150)())
+  .shapePadding(30)
+  .orient("horizontal")
+  .scale(ordinal);
+
+svg.select(".legendOrdinal")
+  .call(legendOrdinal);
+</script>
 </body>
 </html>

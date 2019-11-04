@@ -14,14 +14,6 @@ path, line {
     margin-top: 20px;
     text-align: center;
   }
-
-.brushed {
-    fill: #ff3399;
-    stroke: #8e1b54;
-    opacity: 1.0;
-}
-
-.non_brushed {
-    fill: #404040;
-    opacity: 0.5;
+#manual{
+    text-align: center;
 }

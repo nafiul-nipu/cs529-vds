@@ -130,7 +130,7 @@ const ParticleSystem = function() {
         const height = (bounds.maxY - bounds.minY) + 1;
 
         var planeGeometry = new THREE.PlaneGeometry( 2 * radius , 1.25 * height);
-        var planeMaterial = new THREE.MeshBasicMaterial( {color: 0x018571, side: THREE.DoubleSide} );
+        var planeMaterial = new THREE.MeshBasicMaterial( {color: 0xD3D3D3, side: THREE.DoubleSide} );
         plane = new THREE.Mesh( planeGeometry, planeMaterial );
         plane.geometry.translate(0, (bounds.maxY - bounds.minY)/2, 0);   
         
@@ -140,17 +140,19 @@ const ParticleSystem = function() {
        function onDocumentKeyDown(event) {            
             var keyCode = event.which;
             if (keyCode == 65) {
-                console.log(plane.position.z);
+                //console.log(plane.position.z);
                 plane.translateZ(-value);
                 //var zAxis = plane.position.z;
                 self.scatterPlot(plane.position.z);
                 //sceneObject.add(scatterPlotObject);
+                self.greyScale(plane.position.z);
             }
             else if (keyCode == 68)
             {
-                console.log(plane.position.z);
+                //console.log(plane.position.z);
                 plane.translateZ(value);
                 self.scatterPlot(plane.position.z);
+                self.greyScale(plane.position.z);
             }
             
     }   
@@ -162,12 +164,12 @@ const ParticleSystem = function() {
      if(velocityTest == false){
         d3.select('#rowSVG').select('svg').remove();
         //zAxis = zAxis.toFixed(6);
-        console.log(zAxis);
-        console.log(self.data.length);
+        //console.log(zAxis);
+        //console.log(self.data.length);
         var filteredData = self.data.filter(p => {
-            return p.Z >= (zAxis - 0.0005) && p.Z <= (zAxis + 0.0005);  
+            return p.Z >= (zAxis - 0.102) && p.Z <= (zAxis + 0.102);  
         });
-        console.log(filteredData);
+        //console.log(filteredData);
         var margin = {top: 10, right: 30, bottom: 30, left: 60},
         width = 460 - margin.left - margin.right,
         height = 400 - margin.top - margin.bottom;
@@ -196,6 +198,12 @@ const ParticleSystem = function() {
              .range([ height, 0]);
         svg.append("g")
            .call(d3.axisLeft(yScale));
+        
+
+        var colors = d3.scaleLinear()
+                        .domain([0, 0.09, 0.5, 20, 40, 357.19])
+                       .range([ "#D7191C", "#2C7BB6", "#FFFFBF","#ABD9E9", "#FDAE61"]);
+                        //.range(["#FDAE61", "#2C7BB6", "#D7191C"]);
     
         // Add dots
         var circles = svg.append('g')
@@ -205,56 +213,48 @@ const ParticleSystem = function() {
             .append("circle")
             .attr("cx", function (d) { return xScale(d.X); } )
             .attr("cy", function (d) { return yScale(d.Y); } )
-            .attr("r", 5)
-            .attr("class", "non_brushed");
-
-        //brushing
-        function highlightBrush(){
-            if (d3.event.selection != null){
-                //revert back to initial color
-                circles.attr("class", "non_brushed");
-
-                var brush_coordinate = d3.brushSelection(this);
-                //color the dots
-                circles.filter(function(){
-                    var cx = d3.select(this).attr("cx");
-                    var cy = d3.select(this).attr("cy");
-
-                    return brushStart(brush_coordinate, cx, cy);
-
-                })
-                    .attr("class", "brushed");
-            }
-        }
-
-        var brush = d3.brush()
-                        //.extent([[0,0], [width, height]])
-                        .on("brush", highlightBrush)
-                        .on("end", greyScale)
-        svg.append("g")
-            .call(brush);
-
-        function brushStart(brush_coordinate, cx, cy){
-            var x0 = brush_coordinate[0][0];
-            var x1 = brush_coordinate[1][0];
-            var y0 = brush_coordinate[0][1];
-            var y1 = brush_coordinate[1][0];
-
-            console.log(x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1);
-
-            return x0 <= cx && cx <= x1 && y0 <= cy && cy <= y1;
-        }
-
-        function greyScale(){
-            
-            var d_brushed =  d3.selectAll(".brushed").data();
-            console.log(d_brushed);
-        }
-     
-     
+            .style("fill", function(d){ return colors(d.concentration)})
+            .attr("r", 3);
+                 
         }
 
  }
+ self.greyScale = function(zAxis){
+    //console.log(particleSystem.geometry.vertices[10]);
+    for (var i = 0 ; i < particleSystem.geometry.vertices.length; i++){
+        var concentration = self.data[i].concentration;
+        //console.log(concentration);
+        if(particleSystem.geometry.vertices[i].z >= (zAxis - 0.102) && particleSystem.geometry.vertices[i].z <= (zAxis + 0.102)){
+            //console.log('if condition ');
+            if(concentration >= 0 && concentration <=0.09)
+            {
+                particleSystem.geometry.colors[i].set("#D7191C");
+            }
+            else if(concentration >= 0.09 && concentration <= 0.5)
+            {
+                particleSystem.geometry.colors[i].set("#2C7BB6");
+                
+            }
+            else if(concentration > 0.5 && concentration <= 20)
+            {
+                particleSystem.geometry.colors[i].set("#FFFFBF");
+               
+            }
+            else if(concentration > 20 && concentration <= 40)
+            {
+                particleSystem.geometry.colors[i].set("#ABD9E9");
+                
+            }
+            else{
+                particleSystem.geometry.colors[i].set("#FDAE61");
+               
+            }
+    }else{
+        particleSystem.geometry.colors[i].set("#FFFFFF");
+    }
+    }
+    particleSystem.geometry.colorsNeedUpdate=true;
+    };
 
 //velocity function
  self.createVelocity = function() {
@@ -362,6 +362,7 @@ const ParticleSystem = function() {
                 // create the particle system
                 self.createParticleSystem();
                 self.createPlane();
+                //self.legend();
                 d3.select('#scatter').on('click', function(){
                     //d3.select('#scene').select('canvas').remove();
                     //console.log(sceneObject.getObjectByName('particleSystem'));
@@ -379,6 +380,8 @@ const ParticleSystem = function() {
                     velocityTest = false;
                     var velocityName = sceneObject.getObjectByName('velocitySystem');
                     sceneObject.remove(velocityName);
+                    var planeName = sceneObject.getObjectByName('plane');
+                    sceneObject.remove(planeName);
                     self.createParticleSystem();
                     self.createPlane();
                 });
